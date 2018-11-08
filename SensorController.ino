@@ -61,6 +61,9 @@ void loop() {
     if(result.HasResult) {
         display.PrintSensors(result.Data);
 
+        // TEMP: print out the configuration values to make sure we're good.
+        controllerConfiguration.PrintDebug();
+
         //relayManager.SetRelayState(&result.Data);
 
         httpClient.Transmit(result.Data);
