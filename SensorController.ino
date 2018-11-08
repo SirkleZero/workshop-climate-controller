@@ -1,13 +1,15 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include "SensorData.h"
-#include "HumidityRelayManager.h"
-#include "RFM69RXProxy.h"
+#include "workshop-climate-lib.h" // unsure exactly why this has to be here for this to compile. without it, the sub-directory .h files aren't found. Probably has something to do with not finding the library if nothing is loaded from the root of the src folder.
+#include "Sensors\SensorData.h"
+#include "Relay\HumidityRelayManager.h"
+#include "RX\RFM69RXProxy.h"
+#include "TX\AdafruitIOProxy.h"
+#include "Display\RXTFTFeatherwingProxy.h"
+#include "Configuration\SDCardProxy.h"
+#include "Configuration\Secrets.h"
+#include "Configuration\ControllerConfiguration.h"
 #include "SensorTransmissionResult.h"
-#include "AdafruitIOProxy.h"
-#include "RXTFTFeatherwingProxy.h"
-#include "SDCardProxy.h"
-#include "Secrets.h"
 
 using namespace Display;
 using namespace Relay;
@@ -19,6 +21,7 @@ const unsigned long sampleFrequency = 10000; // ms, how often the sensors are co
 const unsigned int allowedReceiveFailures = 10; // number of times we can fail to get a sensor reading before we terminate
 
 Secrets secrets;
+ControllerConfiguration controllerConfiguration;
 HumidityRelayManager relayManager;
 RFM69RXProxy rxProxy;
 AdafruitIOProxy httpClient;
@@ -32,6 +35,8 @@ void setup() {
 
     sdCard.Initialize();
     sdCard.LoadSecrets(&secrets);
+    sdCard.LoadConfiguration(&controllerConfiguration);
+
     httpClient.Initialize(&secrets);
 
     display.Initialize();
