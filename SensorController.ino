@@ -11,11 +11,12 @@
 #include "Configuration\ControllerConfiguration.h"
 #include "SensorTransmissionResult.h"
 
+using namespace Configuration;
 using namespace Display;
 using namespace Relay;
 using namespace RX;
+using namespace Sensors;
 using namespace TX;
-using namespace Configuration;
 
 const unsigned long sampleFrequency = 10000; // ms, how often the sensors are configured to send data
 const unsigned int allowedReceiveFailures = 10; // number of times we can fail to get a sensor reading before we terminate
@@ -60,9 +61,6 @@ void loop() {
 
     if(result.HasResult) {
         display.PrintSensors(result.Data);
-
-        // TEMP: print out the configuration values to make sure we're good.
-        controllerConfiguration.PrintDebug();
 
         //relayManager.SetRelayState(&result.Data);
 
