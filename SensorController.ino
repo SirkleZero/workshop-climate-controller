@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <MemoryFree.h>
+#include <pgmStrToRAM.h>
+
 #include "workshop-climate-lib.h" // unsure exactly why this has to be here for this to compile. without it, the sub-directory .h files aren't found. Probably has something to do with not finding the library if nothing is loaded from the root of the src folder.
 #include "Sensors\SensorData.h"
 #include "Relay\HumidityRelayManager.h"
@@ -65,6 +68,8 @@ void loop() {
         //relayManager.SetRelayState(&result.Data);
 
         httpClient.Transmit(result.Data);
+
+        Serial.print(F("Free Ram: ")); Serial.print(freeMemory() / 1024, DEC); Serial.println(F("KB"));
 
         // calling Initialize on the rxProxy is a total hack. It re-initializes the RF69 radio
         // because the radio head library doesn't handle shared SPI bus very well (apparently).
