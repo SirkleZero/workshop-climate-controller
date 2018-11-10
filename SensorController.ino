@@ -48,6 +48,7 @@ void setup() {
     display.DrawLayout();
 
     display.PrintSensors(SensorData::EmptyData());
+    display.PrintFreeMemory(freeMemory());
 
     rxProxy.Initialize();
 
@@ -64,6 +65,7 @@ void loop() {
 
     if(result.HasResult) {
         display.PrintSensors(result.Data);
+        display.PrintFreeMemory(freeMemory());
 
         //relayManager.SetRelayState(&result.Data);
 
