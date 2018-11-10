@@ -69,7 +69,7 @@ void loop() {
 
         httpClient.Transmit(result.Data);
 
-        Serial.print(F("Free Ram: ")); Serial.print(freeMemory() / 1024, DEC); Serial.println(F("KB"));
+        Serial.print(F("Free Ram: ")); Serial.print(freeMemory(), DEC); Serial.println(F(" Bytes"));
 
         // calling Initialize on the rxProxy is a total hack. It re-initializes the RF69 radio
         // because the radio head library doesn't handle shared SPI bus very well (apparently).
