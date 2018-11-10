@@ -8,6 +8,7 @@
 #include "Relay\HumidityRelayManager.h"
 #include "RX\RFM69RXProxy.h"
 #include "TX\AdafruitIOProxy.h"
+#include "TX\IoTUploadResult.h"
 #include "Display\RXTFTFeatherwingProxy.h"
 #include "Configuration\SDCardProxy.h"
 #include "Configuration\Secrets.h"
