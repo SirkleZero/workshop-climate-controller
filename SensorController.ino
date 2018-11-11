@@ -55,7 +55,7 @@ void setup() {
 
     rxProxy.Initialize();
 
-    //relayManager.Initialize();
+    relayManager.Initialize(&controllerConfiguration);
 }
 
 void loop() {
@@ -72,6 +72,9 @@ void loop() {
         //relayManager.SetRelayState(&result.Data);
 
         uploadResult = httpClient.Transmit(result.Data);
+        if(uploadResult.IsSuccess){
+            relayManager.KeepAlive();
+        }
         //uploadResult.PrintDebug();
 
         // calling Initialize on the rxProxy is a total hack. It re-initializes the RF69 radio
