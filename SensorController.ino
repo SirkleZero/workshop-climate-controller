@@ -22,11 +22,13 @@ using namespace RX;
 using namespace Sensors;
 using namespace TX;
 
-const unsigned long sampleFrequency = 10000; // ms, how often the sensors are configured to send data
-const unsigned int allowedReceiveFailures = 10; // number of times we can fail to get a sensor reading before we terminate
-
+// objects that store data
 Secrets secrets;
+SensorTransmissionResult result;
+IoTUploadResult uploadResult;
 ControllerConfiguration controllerConfiguration;
+
+// objects that handle functionality
 HumidityRelayManager relayManager;
 RFM69RXProxy rxProxy;
 AdafruitIOProxy httpClient;
@@ -56,8 +58,6 @@ void setup() {
     //relayManager.Initialize();
 }
 
-SensorTransmissionResult result;
-IoTUploadResult uploadResult;
 void loop() {
     // !!! CRITICAL !!!
     // the rxProxy listen function needs to execute as often as possible to not miss any messages
@@ -72,9 +72,7 @@ void loop() {
         //relayManager.SetRelayState(&result.Data);
 
         uploadResult = httpClient.Transmit(result.Data);
-        Serial.print(F("Upload Error Message: ")); Serial.println(uploadResult.ErrorMessage);
-
-        Serial.print(F("Free Ram: ")); Serial.print(freeMemory(), DEC); Serial.println(F(" Bytes"));
+        //uploadResult.PrintDebug();
 
         // calling Initialize on the rxProxy is a total hack. It re-initializes the RF69 radio
         // because the radio head library doesn't handle shared SPI bus very well (apparently).
