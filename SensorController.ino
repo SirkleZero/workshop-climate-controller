@@ -79,7 +79,6 @@ void loop() {
 
         uploadResult = httpClient.Transmit(result.Data);
         if(uploadResult.IsSuccess){
-            relayManager.KeepAlive();
             relayManager.AdjustClimate(result.Data);
         }
         //uploadResult.PrintDebug();
