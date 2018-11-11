@@ -67,13 +67,12 @@ void loop() {
 
     if(result.HasResult) {
         display.PrintSensors(result.Data);
-        display.PrintFreeMemory(freeMemory());   
-
-        //relayManager.SetRelayState(&result.Data);
+        display.PrintFreeMemory(freeMemory());
 
         uploadResult = httpClient.Transmit(result.Data);
         if(uploadResult.IsSuccess){
             relayManager.KeepAlive();
+            relayManager.AdjustClimate(result.Data);
         }
         //uploadResult.PrintDebug();
 
