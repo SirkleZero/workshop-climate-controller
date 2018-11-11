@@ -57,6 +57,7 @@ void setup() {
 }
 
 SensorTransmissionResult result;
+IoTUploadResult uploadResult;
 void loop() {
     // !!! CRITICAL !!!
     // the rxProxy listen function needs to execute as often as possible to not miss any messages
@@ -66,11 +67,12 @@ void loop() {
 
     if(result.HasResult) {
         display.PrintSensors(result.Data);
-        display.PrintFreeMemory(freeMemory());
+        display.PrintFreeMemory(freeMemory());   
 
         //relayManager.SetRelayState(&result.Data);
 
-        httpClient.Transmit(result.Data);
+        uploadResult = httpClient.Transmit(result.Data);
+        Serial.print(F("Upload Error Message: ")); Serial.println(uploadResult.ErrorMessage);
 
         Serial.print(F("Free Ram: ")); Serial.print(freeMemory(), DEC); Serial.println(F(" Bytes"));
 
@@ -80,5 +82,8 @@ void loop() {
         // after that it won't catch anything. This "fixes" that issue. Yes, it's dumb and shared
         // SPI sucks.
         rxProxy.Initialize();
+
+        // display free memory after things have run.
+        display.PrintFreeMemory(freeMemory());
     }
 }
