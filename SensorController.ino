@@ -55,7 +55,7 @@ void setup() {
 
     rxProxy.Initialize();
 
-    relayManager.Initialize(&controllerConfiguration);
+    relayManager.Initialize(&controllerConfiguration);    
 }
 
 void loop() {
@@ -77,9 +77,11 @@ void loop() {
         display.PrintSensors(result.Data);
         display.PrintFreeMemory(freeMemory());
 
+        relayManager.AdjustClimate(result.Data);
+
         uploadResult = httpClient.Transmit(result.Data);
-        if(uploadResult.IsSuccess){
-            relayManager.AdjustClimate(result.Data);
+        if(!uploadResult.IsSuccess){
+            // what should we do if there is an error?
         }
         //uploadResult.PrintDebug();
 
