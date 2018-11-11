@@ -59,6 +59,14 @@ void setup() {
 }
 
 void loop() {
+    // use the emergency shutoff function to shut off the relays if a pre-determined time amount has lapsed.
+    // all of this logic is within this method, no other calls are necessary. The KeepAlive() method is essentially
+    // a dead man switch that this method uses to either keep things going, or, if the sensor array functionality
+    // doesn't transmit anything or we don't receive anything, we shut down power to all our devices.
+    //
+    // this is a safety thing.
+    relayManager.EmergencyShutoff();
+
     // !!! CRITICAL !!!
     // the rxProxy listen function needs to execute as often as possible to not miss any messages
     // or acknowledgements. it would be bad to have the loop have a delay call in it, messages will be lost.
