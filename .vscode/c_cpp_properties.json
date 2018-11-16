@@ -41,7 +41,7 @@
             "forcedInclude": [
                 "C:\\Users\\josh\\AppData\\Local\\Arduino15\\packages\\adafruit\\hardware\\samd\\1.2.3\\cores\\arduino\\Arduino.h"
             ],
-            "intelliSenseMode": "msvc-x64"
+            "intelliSenseMode": "clang-x64"
         }
     ],
     "version": 4
