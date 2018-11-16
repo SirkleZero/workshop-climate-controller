@@ -1,6 +1,6 @@
 {
     "board": "adafruit:samd:adafruit_feather_m0",
     "port": "COM7",
-    "sketch": "SensorController.ino",
+    "sketch": "workshop-climate-controller.ino",
     "output": "../build"
 }
