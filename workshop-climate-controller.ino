@@ -35,64 +35,68 @@ AdafruitIOProxy httpClient;
 RXTFTFeatherwingProxy display;
 SDCardProxy sdCard;
 
-void setup() {
-    Serial.begin(115200);
+void setup()
+{
+	Serial.begin(115200);
 
-    //while (!Serial); // MAKE SURE TO REMOVE THIS!!!
+	//while (!Serial); // MAKE SURE TO REMOVE THIS!!!
 
-    sdCard.Initialize();
-    sdCard.LoadSecrets(&secrets);
-    sdCard.LoadConfiguration(&controllerConfiguration);
+	sdCard.Initialize();
+	sdCard.LoadSecrets(&secrets);
+	sdCard.LoadConfiguration(&controllerConfiguration);
 
-    httpClient.Initialize(&secrets);
+	httpClient.Initialize(&secrets);
 
-    display.Initialize();
-    display.Clear();
-    display.DrawLayout();
+	display.Initialize();
+	display.Clear();
+	display.DrawLayout();
 
-    display.PrintSensors(SensorData::EmptyData());
-    display.PrintFreeMemory(freeMemory());
+	display.PrintSensors(SensorData::EmptyData());
+	display.PrintFreeMemory(freeMemory());
 
-    rxProxy.Initialize();
+	rxProxy.Initialize();
 
-    relayManager.Initialize(&controllerConfiguration);    
+	relayManager.Initialize(&controllerConfiguration);
 }
 
-void loop() {
-    // use the emergency shutoff function to shut off the relays if a pre-determined time amount has lapsed.
-    // all of this logic is within this method, no other calls are necessary. The KeepAlive() method is essentially
-    // a dead man switch that this method uses to either keep things going, or, if the sensor array functionality
-    // doesn't transmit anything or we don't receive anything, we shut down power to all our devices.
-    //
-    // this is a safety thing.
-    relayManager.EmergencyShutoff();
+void loop()
+{
+	// use the emergency shutoff function to shut off the relays if a pre-determined time amount has lapsed.
+	// all of this logic is within this method, no other calls are necessary. The KeepAlive() method is essentially
+	// a dead man switch that this method uses to either keep things going, or, if the sensor array functionality
+	// doesn't transmit anything or we don't receive anything, we shut down power to all our devices.
+	//
+	// this is a safety thing.
+	relayManager.EmergencyShutoff();
 
-    // !!! CRITICAL !!!
-    // the rxProxy listen function needs to execute as often as possible to not miss any messages
-    // or acknowledgements. it would be bad to have the loop have a delay call in it, messages will be lost.
-    // DO NOT put a delay call in the loop function!
-    result = rxProxy.Listen();
+	// !!! CRITICAL !!!
+	// the rxProxy listen function needs to execute as often as possible to not miss any messages
+	// or acknowledgements. it would be bad to have the loop have a delay call in it, messages will be lost.
+	// DO NOT put a delay call in the loop function!
+	result = rxProxy.Listen();
 
-    if(result.HasResult) {
-        display.PrintSensors(result.Data);
-        display.PrintFreeMemory(freeMemory());
+	if (result.HasResult)
+	{
+		display.PrintSensors(result.Data);
+		display.PrintFreeMemory(freeMemory());
 
-        relayManager.AdjustClimate(result.Data);
+		relayManager.AdjustClimate(result.Data);
 
-        uploadResult = httpClient.Transmit(result.Data);
-        if(!uploadResult.IsSuccess){
-            // what should we do if there is an error?
-        }
-        //uploadResult.PrintDebug();
+		uploadResult = httpClient.Transmit(result.Data);
+		if (!uploadResult.IsSuccess)
+		{
+			// what should we do if there is an error?
+		}
+		//uploadResult.PrintDebug();
 
-        // calling Initialize on the rxProxy is a total hack. It re-initializes the RF69 radio
-        // because the radio head library doesn't handle shared SPI bus very well (apparently).
-        // If we don't reinitialize this, the loop will catch only the first transmission, and 
-        // after that it won't catch anything. This "fixes" that issue. Yes, it's dumb and shared
-        // SPI sucks.
-        rxProxy.Initialize();
+		// calling Initialize on the rxProxy is a total hack. It re-initializes the RF69 radio
+		// because the radio head library doesn't handle shared SPI bus very well (apparently).
+		// If we don't reinitialize this, the loop will catch only the first transmission, and 
+		// after that it won't catch anything. This "fixes" that issue. Yes, it's dumb and shared
+		// SPI sucks.
+		rxProxy.Initialize();
 
-        // display free memory after things have run.
-        display.PrintFreeMemory(freeMemory());
-    }
+		// display free memory after things have run.
+		display.PrintFreeMemory(freeMemory());
+	}
 }
