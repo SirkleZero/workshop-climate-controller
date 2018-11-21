@@ -7,13 +7,13 @@
 #include "Sensors\SensorData.h"
 #include "Relay\HumidityRelayManager.h"
 #include "RX\RFM69RXProxy.h"
+#include "RX\SensorTransmissionResult.h"
 #include "TX\AdafruitIOProxy.h"
 #include "TX\IoTUploadResult.h"
 #include "Display\RXTFTFeatherwingProxy.h"
 #include "Configuration\SDCardProxy.h"
 #include "Configuration\Secrets.h"
 #include "Configuration\ControllerConfiguration.h"
-#include "SensorTransmissionResult.h"
 
 using namespace Configuration;
 using namespace Display;
