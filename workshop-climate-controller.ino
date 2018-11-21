@@ -86,10 +86,14 @@ void loop()
 			// what should we do if there is an error?
 		}
 
-		// calling Initialize on the rxProxy is a total hack. It re-initializes the RF69 radio because the radio head library doesn't handle shared SPI bus very well (apparently). If we don't reinitialize this, the loop will catch only the first transmission, and after that it won't catch anything. This "fixes" that issue. Yes, it's dumb and shared SPI sucks.
+		// calling Initialize on the rxProxy is a total hack. It re-initializes the RF69 radio because the radio head library doesn't handle shared SPI bus very well (apparently). If we don't reinitialize this, the loop will catch only the first transmission, and after that it won't catch anything. This "fixes" that issue. Yes, it's dumb and shared SPI sucks, at least in this case.
 
 		// TODO: I suspect that something in this method periodically fails, causing the application to hang. Look here to add some better error handling.
-		rxProxy.Initialize();
+		InitializationResult resetResult = rxProxy.Reset();
+		if (!resetResult.IsSuccessful)
+		{
+			// something didn't work here, so let's display an error message!
+		}
 
 		// display free memory after things have run.
 		display.PrintFreeMemory(freeMemory());
