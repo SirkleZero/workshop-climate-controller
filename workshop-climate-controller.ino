@@ -47,36 +47,44 @@ we need our modules in the following priority order:
 void setup()
 {
 	Serial.begin(115200);
-	//while (!Serial); // MAKE SURE TO REMOVE THIS!!!
+	while (!Serial); // MAKE SURE TO REMOVE THIS!!!
+	Serial.println(F("loading..."));
 
 	// cascading checks to make sure all our everything thats required is initialized properly.
-	if (sdCard.Initialize().IsSuccessful)
+	if (display.Initialize().IsSuccessful)
 	{
-		sdCard.LoadSecrets(&secrets);
-		sdCard.LoadConfiguration(&controllerConfiguration);
+		Serial.println(F("display loaded..."));
+		display.Clear();
+		display.DrawLayout();
 
-		if (display.Initialize().IsSuccessful)
+		display.PrintSensors(SensorData::EmptyData());
+		display.PrintFreeMemory(freeMemory());
+		display.PrintError(F("OMG NO! Super mega bad error!"));
+
+		if (sdCard.Initialize().IsSuccessful)
 		{
-			display.Clear();
-			display.DrawLayout();
-
-			display.PrintSensors(SensorData::EmptyData());
-			display.PrintFreeMemory(freeMemory());
+			Serial.println(F("sd card loaded..."));
+			sdCard.LoadSecrets(&secrets);
+			sdCard.LoadConfiguration(&controllerConfiguration);
 
 			if (relayManager.Initialize(&controllerConfiguration).IsSuccessful)
 			{
+				Serial.println(F("relay loaded..."));
 				if (radio.Initialize().IsSuccessful)
 				{
+					Serial.println(F("radio loaded..."));
 					internetEnabled = httpClient.Initialize(&secrets).IsSuccessful;
 				}
 				else
 				{
 					// radio didn't initialize, display a message.
+					Serial.println(F("Radio didn't initialize properly."));
 				}
 			}
 			else
 			{
 				// relay manager didn't init, display a message.
+				Serial.println(F("Relay didn't initialize properly."));
 			}
 		}
 	}
