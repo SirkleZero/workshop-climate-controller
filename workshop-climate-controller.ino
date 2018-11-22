@@ -118,7 +118,7 @@ void loop()
 		if (!resetResult.IsSuccessful)
 		{
 			// something didn't work here, so let's...
-			// 1. Shut down due to an error
+			// 1. Shut down due to an error. This should keep us from turning on a device and then having an error prevent another cycle from running. This prevents us from finding the system in a permanently on state; a permanently off state is preferable by far.
 			// 2. Display an error message
 			relayManager.ShutDownError();
 		}
