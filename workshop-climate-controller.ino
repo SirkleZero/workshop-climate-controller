@@ -27,7 +27,8 @@ Secrets secrets;
 SensorTransmissionResult result;
 IoTUploadResult uploadResult;
 ControllerConfiguration controllerConfiguration;
-bool radioEnabled, internetEnabled, sdCardEnabled, displayEnabled, relayEnabled;
+bool systemRunnable = true;
+InitializationResult internetEnabled;
 
 // objects that handle functionality
 SDCardProxy sdCard;
@@ -48,43 +49,43 @@ void setup()
 {
 	Serial.begin(115200);
 	while (!Serial); // MAKE SURE TO REMOVE THIS!!!
-	Serial.println(F("loading..."));
 
 	// cascading checks to make sure all our everything thats required is initialized properly.
 	if (display.Initialize().IsSuccessful)
 	{
-		Serial.println(F("display loaded..."));
 		display.Clear();
 		display.DrawLayout();
 
 		display.PrintSensors(SensorData::EmptyData());
 		display.PrintFreeMemory(freeMemory());
-		display.PrintError(F("test - Failure to load sd card!"));
 
 		if (sdCard.Initialize().IsSuccessful)
 		{
-			Serial.println(F("sd card loaded..."));
 			sdCard.LoadSecrets(&secrets);
 			sdCard.LoadConfiguration(&controllerConfiguration);
 
-			if (relayManager.Initialize(&controllerConfiguration).IsSuccessful)
+			InitializationResult relayManagerResult = relayManager.Initialize(&controllerConfiguration);
+			if (relayManagerResult.IsSuccessful)
 			{
-				Serial.println(F("relay loaded..."));
-				if (radio.Initialize().IsSuccessful)
+				InitializationResult radioResult = radio.Initialize();
+				if (radioResult.IsSuccessful)
 				{
-					Serial.println(F("radio loaded..."));
-					internetEnabled = httpClient.Initialize(&secrets).IsSuccessful;
+					internetEnabled = httpClient.Initialize(&secrets);
 				}
 				else
 				{
-					// radio didn't initialize, display a message.
-					Serial.println(F("Radio didn't initialize properly."));
+					systemRunnable = false;
+					display.PrintError(radioResult.ErrorMessage);
+					Serial.println(radioResult.ErrorMessage);
+					sdCard.LogMessage(radioResult.ErrorMessage);
 				}
 			}
 			else
 			{
-				// relay manager didn't init, display a message.
-				Serial.println(F("Relay didn't initialize properly."));
+				systemRunnable = false;
+				display.PrintError(relayManagerResult.ErrorMessage);
+				Serial.println(relayManagerResult.ErrorMessage);
+				sdCard.LogMessage(relayManagerResult.ErrorMessage);
 			}
 		}
 	}
@@ -92,46 +93,62 @@ void setup()
 
 void loop()
 {
-	/*
-	Use the emergency shutoff function to shut off the relays if a pre-determined time amount has lapsed. All of this logic is within this method, no other calls are necessary. The KeepAlive() method is essentially a dead man switch that this method uses to either keep things going, or, if the sensor array functionality doesn't transmit anything or we don't receive anything, we shut down power to all our devices.
-
-	This is a safety thing.
-	*/
-	relayManager.EmergencyShutoff();
-
-	// !!! CRITICAL !!!
-	// the rxProxy listen function needs to execute as often as possible to not miss any messages or acknowledgements. it would be bad to have the loop have a delay call in it, messages will be lost.
-	// DO NOT put a delay call in the loop function!
-	result = radio.Listen();
-
-	if (result.HasResult)
+	if (systemRunnable)
 	{
-		display.PrintSensors(result.Data);
-		display.PrintFreeMemory(freeMemory());
+		/*
+		Use the emergency shutoff function to shut off the relays if a pre-determined time amount has lapsed. All of this logic is within this method, no other calls are necessary. The KeepAlive() method is essentially a dead man switch that this method uses to either keep things going, or, if the sensor array functionality doesn't transmit anything or we don't receive anything, we shut down power to all our devices.
 
-		relayManager.AdjustClimate(result.Data);
+		This is a safety thing.
+		*/
+		relayManager.EmergencyShutoff();
 
-		// if the internet isn't working for some reason, don't bother trying to upload anything.
-		if (internetEnabled)
+		// !!! CRITICAL !!!
+		// the rxProxy listen function needs to execute as often as possible to not miss any messages or acknowledgements. it would be bad to have the loop have a delay call in it, messages will be lost.
+		// DO NOT put a delay call in the loop function!
+		result = radio.Listen();
+
+		if (result.HasResult)
 		{
-			uploadResult = httpClient.Transmit(result.Data);
-			if (!uploadResult.IsSuccess)
+			display.PrintSensors(result.Data);
+			display.PrintFreeMemory(freeMemory());
+
+			relayManager.AdjustClimate(result.Data);
+
+			// if the internet isn't working for some reason, don't bother trying to upload anything.
+			if (internetEnabled.IsSuccessful)
 			{
-				// something didn't work here, so let's display an error message!
+				uploadResult = httpClient.Transmit(result.Data);
+				if (!uploadResult.IsSuccess)
+				{
+					display.PrintError(uploadResult.ErrorMessage);
+					Serial.println(uploadResult.ErrorMessage);
+					sdCard.LogMessage(uploadResult.ErrorMessage);
+				}
 			}
-		}
 
-		// calling Reset on the radio is a total hack. It re-initializes the RF69 radio because the radio head library doesn't handle shared SPI bus very well (apparently). If we don't reinitialize this, the loop will catch only the first transmission, and after that it won't catch anything. This "fixes" that issue. Yes, it's dumb and shared SPI sucks, at least in this case.
-		InitializationResult resetResult = radio.Reset();
-		if (!resetResult.IsSuccessful)
-		{
-			// something didn't work here, so let's...
-			// 1. Shut down due to an error. This should keep us from turning on a device and then having an error prevent another cycle from running. This prevents us from finding the system in a permanently on state; a permanently off state is preferable by far.
-			// 2. Display an error message
-			relayManager.ShutDownError();
-		}
+			// calling Reset on the radio is a total hack. It re-initializes the RF69 radio because the radio head library doesn't handle shared SPI bus very well (apparently). If we don't reinitialize this, the loop will catch only the first transmission, and after that it won't catch anything. This "fixes" that issue. Yes, it's dumb and shared SPI sucks, at least in this case.
+			InitializationResult resetResult = radio.Reset();
+			if (!resetResult.IsSuccessful)
+			{
+				// something didn't work here, so let's...
+				// 1. Shut down due to an error. This should keep us from turning on a device and then having an error prevent another cycle from running. This prevents us from finding the system in a permanently on state; a permanently off state is preferable by far.
+				// 2. Display an error message
+				relayManager.ShutDownError();
 
-		// display free memory after things have run.
-		display.PrintFreeMemory(freeMemory());
+				display.PrintError(resetResult.ErrorMessage);
+				Serial.println(resetResult.ErrorMessage);
+				sdCard.LogMessage(resetResult.ErrorMessage);
+			}
+
+			// display free memory after things have run.
+			display.PrintFreeMemory(freeMemory());
+		}
+	}
+	else
+	{
+		// the needed components of the system are not present or working, show a message
+		const __FlashStringHelper *msg = F("One or more components failed to initialize or run.");
+		Serial.println(msg);
+		display.PrintError(msg);
 	}
 }
