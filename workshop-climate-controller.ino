@@ -30,25 +30,26 @@ ControllerConfiguration controllerConfiguration;
 bool radioEnabled, internetEnabled, sdCardEnabled, displayEnabled, relayEnabled;
 
 // objects that handle functionality
+SDCardProxy sdCard;
+RXTFTFeatherwingProxy display;
 HumidityRelayManager relayManager;
 RFM69RXProxy radio;
 AdafruitIOProxy httpClient;
-RXTFTFeatherwingProxy display;
-SDCardProxy sdCard;
 
 /*
 we need our modules in the following priority order:
 1. SD Card - Contains all of our configuration. Can't run without this information.
-2. The Display - we can technically function without a display, but we're going to use it to display errors.
+2. The Display - we can technically function without a display, but we're going to use it to display errors, so uh, it's required.
 3. Relay Manager - no point in doing any of this if the relay handling isn't there
 4. The RFM69 Radio - Sends us data. Without it, again, no point.
-5. The Internet / adafruit - again, we can function without this.
+5. The Internet / adafruit - we can function without this, it's the only component not really required.
 */
 void setup()
 {
 	Serial.begin(115200);
 	//while (!Serial); // MAKE SURE TO REMOVE THIS!!!
 
+	// cascading checks to make sure all our everything thats required is initialized properly.
 	if (sdCard.Initialize().IsSuccessful)
 	{
 		sdCard.LoadSecrets(&secrets);
@@ -68,6 +69,14 @@ void setup()
 				{
 					internetEnabled = httpClient.Initialize(&secrets).IsSuccessful;
 				}
+				else
+				{
+					// radio didn't initialize, display a message.
+				}
+			}
+			else
+			{
+				// relay manager didn't init, display a message.
 			}
 		}
 	}
@@ -108,7 +117,10 @@ void loop()
 		InitializationResult resetResult = radio.Reset();
 		if (!resetResult.IsSuccessful)
 		{
-			// something didn't work here, so let's display an error message!
+			// something didn't work here, so let's...
+			// 1. Shut down due to an error
+			// 2. Display an error message
+			relayManager.ShutDownError();
 		}
 
 		// display free memory after things have run.
