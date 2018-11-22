@@ -59,7 +59,7 @@ void setup()
 
 		display.PrintSensors(SensorData::EmptyData());
 		display.PrintFreeMemory(freeMemory());
-		display.PrintError(F("OMG NO! Super mega bad error!"));
+		display.PrintError(F("test - Failure to load sd card!"));
 
 		if (sdCard.Initialize().IsSuccessful)
 		{
