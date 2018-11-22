@@ -94,12 +94,13 @@ void loop()
 
 		relayManager.AdjustClimate(result.Data);
 
+		// if the internet isn't working for some reason, don't bother trying to upload anything.
 		if (internetEnabled)
 		{
 			uploadResult = httpClient.Transmit(result.Data);
 			if (!uploadResult.IsSuccess)
 			{
-				// what should we do if there is an error?
+				// something didn't work here, so let's display an error message!
 			}
 		}
 
