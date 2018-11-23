@@ -48,7 +48,7 @@ we need our modules in the following priority order:
 void setup()
 {
 	Serial.begin(115200);
-	while (!Serial); // MAKE SURE TO REMOVE THIS!!!
+	//while (!Serial); // MAKE SURE TO REMOVE THIS!!!
 
 	// cascading checks to make sure all our everything thats required is initialized properly.
 	if (display.Initialize().IsSuccessful)
