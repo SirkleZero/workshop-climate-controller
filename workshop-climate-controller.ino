@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <MemoryFree.h>
 #include <pgmStrToRAM.h>
+#include <Adafruit_SleepyDog.h>
 
 #include "workshop-climate-lib.h" // unsure exactly why this has to be here for this to compile. without it, the sub-directory .h files aren't found. Probably has something to do with not finding the library if nothing is loaded from the root of the src folder.
 #include "Sensors\SensorData.h"
@@ -88,6 +89,11 @@ void setup()
 				sdCard.LogMessage(relayManagerResult.ErrorMessage);
 			}
 		}
+
+		// IMPORTANT! Turn on the watch dog timer and enable at the maximum value. For the M0 this is approximately 16 seconds, after whic the watch dog will restart the device.
+		// This exists purely as a stability mechanism to mitigate device lockups / hangs / etc.
+		Watchdog.enable();
+		sdCard.LogMessage(F("Watchdog timer enabled during device setup."));
 	}
 }
 
@@ -95,6 +101,9 @@ void loop()
 {
 	if (systemRunnable)
 	{
+		// reset the watchdog with each loop iteration. If the loop hangs, the watchdog will reset the device.
+		Watchdog.reset();
+
 		/*
 		Use the emergency shutoff function to shut off the relays if a pre-determined time amount has lapsed. All of this logic is within this method, no other calls are necessary. The KeepAlive() method is essentially a dead man switch that this method uses to either keep things going, or, if the sensor array functionality doesn't transmit anything or we don't receive anything, we shut down power to all our devices.
 
@@ -106,6 +115,7 @@ void loop()
 		// the rxProxy listen function needs to execute as often as possible to not miss any messages or acknowledgements. it would be bad to have the loop have a delay call in it, messages will be lost.
 		// DO NOT put a delay call in the loop function!
 		result = radio.Listen();
+		Watchdog.reset();
 
 		if (result.HasResult)
 		{
@@ -113,11 +123,16 @@ void loop()
 			display.PrintFreeMemory(freeMemory());
 
 			relayManager.AdjustClimate(result.Data);
+			Watchdog.reset();
 
 			// if the internet isn't working for some reason, don't bother trying to upload anything.
 			if (internetEnabled.IsSuccessful)
 			{
 				uploadResult = httpClient.Transmit(result.Data);
+				// The http transmission is likely the most time consuming thing in this application.
+				// Make sure to reset the watchdog after it's completed or the device will reboot!
+				Watchdog.reset();
+
 				if (!uploadResult.IsSuccess)
 				{
 					display.PrintError(uploadResult.ErrorMessage);
